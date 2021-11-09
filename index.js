@@ -1,5 +1,21 @@
 const playwright = require('playwright');
+const commandLineArgs = require('command-line-args')
 const config = require('./config.json');
+
+optionDefinitions = [
+    {
+        name: 'playlist',
+        type: String,
+        multiple: true,
+        defaultOption: true
+    }, {
+        name: 'search',
+        alias: 's',
+        type: String,
+        multiple: true
+    }
+]
+const options = commandLineArgs(optionDefinitions)
 
 function extract_time(text) {
     const match = text.match(/((?<hour>\d+):)?(?<minute>\d+):(?<second>\d+)/);
@@ -20,7 +36,21 @@ function extract_time(text) {
     const browser = await browserType.launch(launchConfig);
     const context = await browser.newContext();
     const page = await context.newPage();
-    const videoList = ['BV1ah411t7Pp'];
+    if (options.search && options.search.length > 0) { //
+        await page.goto(`https://search.bilibili.com/all?keyword=${
+            options.search.join('%20')
+        }`);
+        await page.waitForSelector('.video-item > a', {timeout: 10000});
+        const collections = await page.$$('.video-item > a');
+        for await(const item of collections) {
+            const href = await item.getAttribute('href');
+            const id = href.match(/[AaBb][Vv]\w+/)[0];
+            const title = await item.getAttribute('title');
+            process.stdout.write(`${title}\n${id}\n`)
+        }
+    
+} else {
+    const videoList = options.playlist.map(x => x.match(/[AaBb][Vv]\w+/)[0]).filter(x => x);
     for await(const videoId of videoList) { // 这里应该监听事件/request/文字变化更稳一些可惜xyq不知道怎么做
         await page.goto(`https://www.bilibili.com/video/${videoId}`);
         await page.waitForSelector('span.tit', {timeout: 10000});
@@ -54,5 +84,4 @@ function extract_time(text) {
             await page.waitForTimeout(1000);
         }
     }
-
-await browser.close();})();
+}await browser.close();})();
