@@ -32,7 +32,7 @@ function extract_time(text) {
 (async () => {
     const browserType = playwright.firefox;
     const launchConfig = {
-        headless: false
+        headless: true
     };
     if (config.proxy) { 
         launchConfig.proxy = config.proxy;
