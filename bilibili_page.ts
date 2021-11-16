@@ -25,17 +25,19 @@ export async function search_videos(page : playwright.Page, keywords : string[])
     }`);
     await page.waitForSelector('.video-item > a', {timeout: 10000});
     const collections = await page.$$('.video-item > a');
+    const result: {id: string, title: string}[] = [];
     for await(const item of collections) {
         const href = await item.getAttribute('href');
         if (href) {
             const match = href.match(/[AaBb][Vv]\w+/);
             if (match) {
                 const id = match[0];
-                const title = await item.getAttribute('title');
-                process.stdout.write(`${title}\n${id}\n`);
+                const title = await item.getAttribute('title') ?? '';
+                result.push({id: id, title: title});
             }
         }
     }
+    return result;
 };/**
  * 进入直播间
  * @param {playwright.Page} page playwright页面
