@@ -61,7 +61,7 @@ const options = commandLineArgs(optionDefinitions);
             if (command.startsWith('p')) {
                 if(splits.length == 0){
                     await play_videos(page, searchList.map(x=>x.id));
-                }else if(splits[0].match(/\d{1,2}/)){
+                }else if(splits[0].match(/^\d{1,2}$/)){
                     await play_videos(page, [searchList[parseInt(splits[0])].id]);
                 }else{
                     await play_videos(page, splits)
