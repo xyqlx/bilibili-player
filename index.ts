@@ -3,7 +3,7 @@ const commandLineArgs = require('command-line-args')
 import * as readline from 'readline';
 import {stdin as input, stdout as output, stdout} from 'process';
 const config = require('./config.json');
-import {open_live, play_videos, search_videos} from './bilibili_page.js'
+import {open_live, play_videos, search_videos, show_up_videos} from './bilibili_page.js'
 
 
 const optionDefinitions = [
@@ -62,6 +62,7 @@ const options = commandLineArgs(optionDefinitions);
             const splits = inputText.split(' ');
             const command = splits[0];
             splits.splice(0, 1);
+            // play
             if (command.startsWith('p')) {
                 if(splits.length == 0){
                     await play_videos(page, searchList.map(x=>x.id));
@@ -70,20 +71,44 @@ const options = commandLineArgs(optionDefinitions);
                 }else{
                     await play_videos(page, splits)
                 }
-            } else if (command.startsWith('s')) {
+            }
+            // search
+            else if (command.startsWith('s')) {
                 searchList = await search_videos(page, splits);
                 searchList.forEach((video, index) => {
                     process.stdout.write(`${video.id} ${index} ${video.title}\n`);
                 })
-            } else if (command.startsWith('l')) {
+            }
+            // live
+            else if (command.startsWith('l')) {
                 await open_live(page, splits[0]);
-            } else if (command.startsWith('h')) {
+            }
+            // help
+            else if (command.startsWith('h')) {
                 process.stdout.write('play | search | live | help | quit\n');
-            } else if (command.startsWith('q')) {
+            }
+            // quit
+            else if (command.startsWith('q')) {
                 process.stdout.write('quit...\n');
                 rl.close();
                 break;
-            } else {
+            }
+            // most
+            else if (command.startsWith('m')) {
+                searchList = await show_up_videos(page, splits[0], false);
+                searchList.forEach((video, index) => {
+                    process.stdout.write(`${video.id} ${index} ${video.title}\n`);
+                })
+                break;
+            }
+            // new
+            else if(command.startsWith('n')){
+                searchList = await show_up_videos(page, splits[0], true);
+                searchList.forEach((video, index) => {
+                    process.stdout.write(`${video.id} ${index} ${video.title}\n`);
+                })
+            }
+            else {
                 process.stdout.write('unrecognized command.\n')
             }
         }

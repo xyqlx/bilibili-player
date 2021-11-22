@@ -4,7 +4,7 @@ import playwright = require('playwright');
  * @param {string} text 需要解析的时间，例如3:06
  * @returns 秒数
  */
-export function extract_time(text : string) {
+export function extract_time(text: string) {
     const match = text.match(/((?<hour>\d+):)?(?<minute>\d+):(?<second>\d+)/);
     if (match) {
         const groups = match.groups;
@@ -19,126 +19,172 @@ export function extract_time(text : string) {
  * @param {playwright.Page} page playwright页面
  * @param {string[]} keywords 搜索关键词
  */
-export async function search_videos(page : playwright.Page, keywords : string[]) { // TODO 返回值完全可以写成视频的信息
-    await page.goto(`https://search.bilibili.com/all?keyword=${
-        keywords.join('%20')
-    }`);
-    await page.waitForSelector('.video-item > a', {timeout: 10000});
+export async function search_videos(page: playwright.Page, keywords: string[]) { // TODO 返回值完全可以写成视频的信息
+    await page.goto(`https://search.bilibili.com/all?keyword=${keywords.join('%20')
+        }`);
+    await page.waitForSelector('.video-item > a', { timeout: 10000 });
     const collections = await page.$$('.video-item > a');
-    const result: {id: string, title: string}[] = [];
-    for await(const item of collections) {
+    const result: { id: string, title: string }[] = [];
+    for await (const item of collections) {
         const href = await item.getAttribute('href');
         if (href) {
             const match = href.match(/[AaBb][Vv]\w+/);
             if (match) {
                 const id = match[0];
                 const title = await item.getAttribute('title') ?? '';
-                result.push({id: id, title: title});
+                result.push({ id: id, title: title });
             }
         }
     }
     return result;
-};/**
+};
+/**
  * 进入直播间
  * @param {playwright.Page} page playwright页面
  * @param {string} liveId 直播间id
- */export async function open_live(page : playwright.Page, liveId : string) {
-// 这个页面好奇怪，总是加载不出来
-// 甚至在页面上用querySelector都搜索不出来，太神必了
-// iframe的话……不会用
-// 不过直播这块应该有不少其它代码可以参考……
-await page.goto(`https://live.bilibili.com/${liveId}`, {
-    waitUntil: 'load',
-    timeout: 0
-});
-process.stdout.write(`直播间加载中\n`);
-let title = '';
-let currentTime = 0;
-await page.waitForTimeout(5000);
-const iframes = await page.$$('iframe');
-if (iframes.length !== 0) {
-    console.log(iframes.length);
-    for (const iframe of iframes) {
-        let url = await iframe.getAttribute('src');
-        if(url){
-            // 怎么还有奇奇怪怪的url
-            if (url.startsWith('//')) {
-                url = `https:${url}`;
-            }
-            if (url.match(/live/)) {
-                process.stdout.write(`重定向至${url}\n`)
-                page.goto(url, {
-                    waitUntil: 'load',
-                    timeout: 0
-                });
-            }
-        }
-    }
-}
-while (true) {
-    if (title === '') {
-        try {
-            title = await page.innerText('div.live-title div.text', {timeout: 10000});
-            if (title !== '') {
-                process.stdout.write(`进入直播间：${title}\n`);
-                await page.waitForSelector('#live-player', {timeout: 10000});
-                await page.dispatchEvent('#live-player', 'mousemove', undefined, {timeout: 0});
-                await page.hover('.volume');
-                const volume = await page.innerText('.volume-control .number');
-                process.stdout.write(`音量：${volume}\n`);
-                if (volume === "0") {
-                    process.stdout.write(`自动打开声音\n`);
-                    await page.click('.volume');
+ */
+export async function open_live(page: playwright.Page, liveId: string) {
+    // 这个页面好奇怪，总是加载不出来
+    // 甚至在页面上用querySelector都搜索不出来，太神必了
+    // iframe的话……不会用
+    // 不过直播这块应该有不少其它代码可以参考……
+    await page.goto(`https://live.bilibili.com/${liveId}`, {
+        waitUntil: 'load',
+        timeout: 0
+    });
+    process.stdout.write(`直播间加载中\n`);
+    let title = '';
+    let currentTime = 0;
+    await page.waitForTimeout(5000);
+    const iframes = await page.$$('iframe');
+    if (iframes.length !== 0) {
+        console.log(iframes.length);
+        for (const iframe of iframes) {
+            let url = await iframe.getAttribute('src');
+            if (url) {
+                // 怎么还有奇奇怪怪的url
+                if (url.startsWith('//')) {
+                    url = `https:${url}`;
+                }
+                if (url.match(/live/)) {
+                    process.stdout.write(`重定向至${url}\n`)
+                    page.goto(url, {
+                        waitUntil: 'load',
+                        timeout: 0
+                    });
                 }
             }
-        } catch (error) { // 加载中
-        }
-        try {
-            let currentTimeText = await page.innerText('.tip-wrap .text', {timeout: 10000});
-            currentTime = extract_time(currentTimeText);
-            if (currentTime > 0) {
-                await page.waitForTimeout(1000);
-                process.stdout.write(`${currentTimeText}\r`);
-            }
-        } catch (error) { // 加载中
         }
     }
+    while (true) {
+        if (title === '') {
+            try {
+                title = await page.innerText('div.live-title div.text', { timeout: 10000 });
+                if (title !== '') {
+                    process.stdout.write(`进入直播间：${title}\n`);
+                    await page.waitForSelector('#live-player', { timeout: 10000 });
+                    await page.dispatchEvent('#live-player', 'mousemove', undefined, { timeout: 0 });
+                    await page.hover('.volume');
+                    const volume = await page.innerText('.volume-control .number');
+                    process.stdout.write(`音量：${volume}\n`);
+                    if (volume === "0") {
+                        process.stdout.write(`自动打开声音\n`);
+                        await page.click('.volume');
+                    }
+                }
+            } catch (error) { // 加载中
+            }
+            try {
+                let currentTimeText = await page.innerText('.tip-wrap .text', { timeout: 10000 });
+                currentTime = extract_time(currentTimeText);
+                if (currentTime > 0) {
+                    await page.waitForTimeout(1000);
+                    process.stdout.write(`${currentTimeText}\r`);
+                }
+            } catch (error) { // 加载中
+            }
+        }
 
-}};/**
+    }
+};/**
  * 播放视频
  * @param {playwright.Page} page playwright页面
  * @param {string[]} videoList 视频Id列表
- */export async function play_videos(page : playwright.Page, videoList : string[]): Promise < void > {
-for await(const videoId of videoList) { // 这里应该监听事件/request/文字变化更稳一些可惜xyq不知道怎么做
-    await page.goto(`https://www.bilibili.com/video/${videoId}`);
-    await page.waitForSelector('span.tit', {timeout: 10000});
-    const titleSpan = await page.$('span.tit');
-    const title = await titleSpan?.innerText();
-    process.stdout.write(`正在播放：${title}\n`);
-    let fullTime = 0;
-    let fullTimeText = '';
-    while (fullTime === 0) {
-        await page.hover('.player');
-        await page.waitForSelector('span.bilibili-player-video-time-total', {
-            timeout: 10000,
-            state: 'visible'
-        });
-        fullTimeText = await page.innerText('.bilibili-player-video-time-total');
-        fullTime = extract_time(fullTimeText);
-    }
-    while (true) {
-        await page.hover('.player');
-        await page.waitForSelector('span.bilibili-player-video-time-now', {
-            timeout: 10000,
-            state: 'visible'
-        });
-        const currentTimeText = await page.innerText('span.bilibili-player-video-time-now');
-        const currentTime = extract_time(currentTimeText);
-        if (currentTime == fullTime) {
-            break;
+ */export async function play_videos(page: playwright.Page, videoList: string[]): Promise<void> {
+    for await (const videoId of videoList) { // 这里应该监听事件/request/文字变化更稳一些可惜xyq不知道怎么做
+        await page.goto(`https://www.bilibili.com/video/${videoId}`);
+        await page.waitForSelector('span.tit', { timeout: 10000 });
+        const titleSpan = await page.$('span.tit');
+        const title = await titleSpan?.innerText();
+        process.stdout.write(`正在播放：${title}\n`);
+        // 关闭可能的静音（支持新版本）
+        try {
+            const volume = await page.innerText('div.bilibili-player-video-volume-num', { timeout: 5000 });
+            if (volume === '0') {
+                await page.click('button.bilibili-player-iconfont bilibili-player-iconfont-volume-min');
+                process.stdout.write('成功关闭静音\n');
+            }
         }
-        // console.log(`${currentTimeText}/${fullTimeText}`);
-        process.stdout.write(`${currentTimeText}/${fullTimeText}\r`);
-        await page.waitForTimeout(1000);
+        catch (err) { }
+        // 显示UP信息
+        const upUrlCollection = await page.$$('.up-card>a');
+        const upUrls = await Promise.all(upUrlCollection.map(async x => await x.getAttribute('href')));
+        const upIds = upUrls.filter(x => x).map(x => (x!.match(/\d+/) ?? ['0'])[0]);
+        const upNameCollection = await page.$$('.up-card>.avatar-name__container>a');
+        const upNames = await Promise.all(upNameCollection.map(async x => await x.innerText()));
+        const upinfo = upIds.map((v, i) => `${upNames[i]}(${v})`).join(', ');
+        process.stdout.write(`UP主：${upinfo}\n`);
+        // 输出时间
+        let fullTime = 0;
+        let fullTimeText = '';
+        while (fullTime === 0) {
+            await page.hover('.player');
+            await page.waitForSelector('span.bilibili-player-video-time-total', {
+                timeout: 10000,
+                state: 'visible'
+            });
+            fullTimeText = await page.innerText('.bilibili-player-video-time-total');
+            fullTime = extract_time(fullTimeText);
+        }
+        while (true) {
+            await page.hover('.player');
+            await page.waitForSelector('span.bilibili-player-video-time-now', {
+                timeout: 10000,
+                state: 'visible'
+            });
+            const currentTimeText = await page.innerText('span.bilibili-player-video-time-now');
+            const currentTime = extract_time(currentTimeText);
+            if (currentTime == fullTime) {
+                break;
+            }
+            // console.log(`${currentTimeText}/${fullTimeText}`);
+            process.stdout.write(`${currentTimeText}/${fullTimeText}\r`);
+            await page.waitForTimeout(1000);
+        }
     }
-}};
+};
+export async function show_up_videos(page: playwright.Page, upId: string, latest: boolean): Promise<{ id: string, title: string }[]> {
+    await page.goto(`https://space.bilibili.com/${upId}/video`);
+    if (latest) {
+        const collections = await page.$$('.cube-list > li > a.title');
+        const result: { id: string, title: string }[] = [];
+        for await (const item of collections) {
+            const href = await item.getAttribute('href');
+            if (href) {
+                const match = href.match(/[AaBb][Vv]\w+/);
+                if (match) {
+                    const id = match[0];
+                    const title = await item.getAttribute('title') ?? '';
+                    result.push({ id: id, title: title });
+                }
+            }
+        }
+        return result;
+    } else {
+        await page.click('ul.be-tab-inner>li:nth-child(2)>input');
+        // await page.waitForSelector('ul.be-tab-inner>li:nth-child(2).is-active');
+        const response = await page.waitForResponse(p=>p.url().includes('search') && p.status() === 200);
+        const videos = JSON.parse(await response.text())['data']['list']['vlist'];
+        return videos.map((x:any)=>({id: x['bvid'], title: x['title']}));
+    }
+}
