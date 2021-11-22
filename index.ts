@@ -17,6 +17,10 @@ const optionDefinitions = [
         alias: 's',
         type: String,
         multiple: true
+    },{
+        name: 'debug',
+        alias: 'd',
+        type: Boolean,
     }, {
         name: 'live',
         alias: 'l',
@@ -28,7 +32,7 @@ const options = commandLineArgs(optionDefinitions);
     const browserType = playwright.firefox;
     const launchConfig: {headless:boolean,
         proxy?:string} = {
-            headless: true
+            headless: !options.debug,
         };
     if (config.proxy) {
         launchConfig.proxy = config.proxy;
