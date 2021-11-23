@@ -34,6 +34,12 @@ const optionDefinitions = [
     }
 ]
 const options = commandLineArgs(optionDefinitions);
+function matchCommand(pattern: string): (text: string)=>boolean {
+    return function (command: string): boolean {
+        const index = pattern.indexOf(command);
+        return index === 0;
+    }
+}
 (async () => {
     const browserType = playwright.firefox;
     let launchConfig: {
@@ -71,7 +77,7 @@ const options = commandLineArgs(optionDefinitions);
             const command = splits[0];
             splits.splice(0, 1);
             // play
-            if (command.startsWith('p')) {
+            if (matchCommand('play')(command)) {
                 if (splits.length == 0) {
                     await play_videos(page, searchList.map(x => x.id));
                 } else if (splits[0].match(/^\d{1,2}$/)) {
@@ -81,28 +87,28 @@ const options = commandLineArgs(optionDefinitions);
                 }
             }
             // search
-            else if (command.startsWith('s')) {
+            else if (matchCommand('search')(command)) {
                 searchList = await search_videos(page, splits);
                 searchList.forEach((video, index) => {
                     process.stdout.write(`${video.id} ${index} ${video.title}\n`);
                 })
             }
             // live
-            else if (command.startsWith('l')) {
+            else if (matchCommand('live')(command)) {
                 await open_live(page, splits[0]);
             }
             // help
-            else if (command.startsWith('h')) {
-                process.stdout.write('play | search | live | help | quit\n');
+            else if (matchCommand('help')(command)) {
+                process.stdout.write('see https://github.com/xyqlx/bilibili-player\nplay [bvId] | search [keywords] | live [liveId] | most [uid] | new [uid] | help | quit\n');
             }
             // quit
-            else if (command.startsWith('q')) {
+            else if (matchCommand('quit')(command)) {
                 process.stdout.write('quit...\n');
                 rl.close();
                 break;
             }
             // most
-            else if (command.startsWith('m')) {
+            else if (matchCommand('most')(command)) {
                 searchList = await show_up_videos(page, splits[0], false);
                 searchList.forEach((video, index) => {
                     process.stdout.write(`${video.id} ${index} ${video.title}\n`);
@@ -110,7 +116,7 @@ const options = commandLineArgs(optionDefinitions);
                 break;
             }
             // new
-            else if (command.startsWith('n')) {
+            else if (matchCommand('new')(command)) {
                 searchList = await show_up_videos(page, splits[0], true);
                 searchList.forEach((video, index) => {
                     process.stdout.write(`${video.id} ${index} ${video.title}\n`);

@@ -28,10 +28,10 @@
 | play | 播放视频 | p BV1FX4y1g7u8 |
 | play | 按序号播放上次搜索到的视频 | p 1 |
 | live | 按直播间号打开直播 | l 213 |
-| help | 打开帮助（然而什么都没有） | h |
-| quit | 退出 | q |
 | most | 展示UP播放量最多的视频 | m 16302815 |
 | new | 展示UP发布的最新视频 | n 16302815 |
+| help | 打开帮助（然而什么都没有） | h |
+| quit | 退出 | q |
 
 ## 安装依赖
 
@@ -68,10 +68,16 @@ config.json放在index.js目录下，用于配置proxy
 npm run compile
 ```
 
-运行
+运行（会进行编译）
 
 ```shell
 npm run start
+```
+
+运行（如果已经编译过）
+
+```shell
+npm run quickstart
 ```
 
 ## 已知问题
