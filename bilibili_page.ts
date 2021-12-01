@@ -113,26 +113,45 @@ export async function open_live(page: playwright.Page, liveId: string) {
  */export async function play_videos(page: playwright.Page, videoList: string[]): Promise<void> {
     for await (const videoId of videoList) { // 这里应该监听事件/request/文字变化更稳一些可惜xyq不知道怎么做
         await page.goto(`https://www.bilibili.com/video/${videoId}`);
-        await page.waitForSelector('span.tit', { timeout: 10000 });
-        const titleSpan = await page.$('span.tit');
-        const title = await titleSpan?.innerText();
+        const title = (await page.title()).replace(/\s*_哔哩哔哩_bilibili/, '');
         process.stdout.write(`正在播放：${title}\n`);
-        // 关闭可能的静音（支持新版本）
+        // 关闭可能的静音（很多时候都会失效）
         try {
             const volume = await page.innerText('div.bilibili-player-video-volume-num', { timeout: 5000 });
+            console.log(`音量: ${volume}`);
             if (volume === '0') {
                 await page.click('button.bilibili-player-iconfont bilibili-player-iconfont-volume-min');
-                process.stdout.write('成功关闭静音\n');
+                process.stdout.write('试图关闭静音\n');
             }
         }
         catch (err) { }
         // 显示UP信息
         const upUrlCollection = await page.$$('.up-card>a');
         const upUrls = await Promise.all(upUrlCollection.map(async x => await x.getAttribute('href')));
-        const upIds = upUrls.filter(x => x).map(x => (x!.match(/\d+/) ?? ['0'])[0]);
+        let upIds = upUrls.filter(x => x).map(x => (x!.match(/\d+/) ?? ['0'])[0]);
         const upNameCollection = await page.$$('.up-card>.avatar-name__container>a');
-        const upNames = await Promise.all(upNameCollection.map(async x => await x.innerText()));
-        const upinfo = upIds.map((v, i) => `${upNames[i]}(${v})`).join(', ');
+        let upNames = await Promise.all(upNameCollection.map(async x => await x.innerText()));
+        let upinfo = upIds.map((v, i) => `${upNames[i]}(${v})`).join(', ');
+        // 试着从元信息里找UP信息
+        if(upinfo === ''){
+            for(const meta of await page.$$('meta')){
+                const metaName = await meta.getAttribute('name');
+                if(metaName === 'author'){
+                    upNames = [await meta.getAttribute('content') ?? ''];
+                    for(const a of await page.$$('a')){
+                        if(upNames[0] === await a.innerText()){
+                            const match = (await a.getAttribute('href'))?.match(/\d+/);
+                            if(match){
+                                upIds = [match[0]];
+                                break;
+                            }
+                        }
+                    }
+                    break;
+                }
+            }
+            upinfo = upIds.map((v, i) => `${upNames[i]}(${v})`).join(', ');
+        }
         process.stdout.write(`UP主：${upinfo}\n`);
         // 输出时间
         let fullTime = 0;
