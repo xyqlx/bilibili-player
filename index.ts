@@ -58,7 +58,7 @@ function matchCommand(pattern: string): (text: string)=>boolean {
     if (options.search && options.search.length > 0) { //
         searchList = await search_videos(page, options.search);
         searchList.forEach((video, index) => {
-            process.stdout.write(`${index} ${video.title}\n`);
+            process.stdout.write(`${video.id} ${video.title}\n`);
         })
     } else if (options.live) {
         const liveId = options.live.match(/(?=https:\/\/live\.bilibili\.com\/)?\d+/)[0];
