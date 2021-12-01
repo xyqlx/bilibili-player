@@ -114,6 +114,10 @@ export async function open_live(page: playwright.Page, liveId: string) {
     for await (const videoId of videoList) { // 这里应该监听事件/request/文字变化更稳一些可惜xyq不知道怎么做
         await page.goto(`https://www.bilibili.com/video/${videoId}`);
         const title = (await page.title()).replace(/\s*_哔哩哔哩_bilibili/, '');
+        if(title.match(/出错啦/)){
+            process.stdout.write(`出错啦\n`);
+            return;
+        }
         process.stdout.write(`正在播放：${title}\n`);
         // 关闭可能的静音（很多时候都会失效）
         try {

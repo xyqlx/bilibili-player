@@ -67,63 +67,73 @@ function matchCommand(pattern: string): (text: string)=>boolean {
         const videoList = options.playlist.filter((x: string) => x).map((x: string) => x!.match(/[AaBb][Vv]\w+/)).filter((x: RegExpMatchArray) => x && x.length > 0).map((x: RegExpMatchArray) => x[0])
         await play_videos(page, videoList);
     } else { // 进入命令模式
-        output.write('COMMAND MODE\n');
+        process.on('SIGINT', function() {
+            browser.close();
+            process.exit();
+        });
+        process.stdout.write('命令模式\n');
         const rl = readline.createInterface({ input, output });
         while (true) {
-            const inputText: string = await new Promise(resolve => {
-                rl.question('', resolve)
-            })
-            const splits = inputText.split(' ');
-            const command = splits[0];
-            splits.splice(0, 1);
-            // play
-            if (matchCommand('play')(command)) {
-                if (splits.length == 0) {
-                    await play_videos(page, searchList.map(x => x.id));
-                } else if (splits[0].match(/^\d{1,2}$/)) {
-                    await play_videos(page, [searchList[parseInt(splits[0])].id]);
-                } else {
-                    await play_videos(page, splits)
+            try{
+                const inputText: string = await new Promise(resolve => {
+                    rl.question('', resolve)
+                })
+                const splits = inputText.split(' ');
+                const command = splits[0];
+                splits.splice(0, 1);
+                // play
+                if (matchCommand('play')(command)) {
+                    if (splits.length == 0) {
+                        await play_videos(page, searchList.map(x => x.id));
+                    } else if (splits[0].match(/^\d{1,2}$/)) {
+                        await play_videos(page, [searchList[parseInt(splits[0])].id]);
+                    } else {
+                        await play_videos(page, splits)
+                    }
+                }
+                // search
+                else if (matchCommand('search')(command)) {
+                    searchList = await search_videos(page, splits);
+                    searchList.forEach((video, index) => {
+                        process.stdout.write(`${video.id} ${index} ${video.title}\n`);
+                    })
+                }
+                // live
+                else if (matchCommand('live')(command)) {
+                    await open_live(page, splits[0]);
+                }
+                // help
+                else if (matchCommand('help')(command)) {
+                    process.stdout.write('(see https://github.com/xyqlx/bilibili-player)\nplay [bvId] | search [keywords] | live [liveId] | most [uid] | new [uid] | help | quit\n');
+                }
+                // quit
+                else if (matchCommand('quit')(command)) {
+                    process.stdout.write('quit...\n');
+                    rl.close();
+                    break;
+                }
+                // most
+                else if (matchCommand('most')(command)) {
+                    searchList = await show_up_videos(page, splits[0], false);
+                    searchList.forEach((video, index) => {
+                        process.stdout.write(`${video.id} ${index} ${video.title}\n`);
+                    })
+                    break;
+                }
+                // new
+                else if (matchCommand('new')(command)) {
+                    searchList = await show_up_videos(page, splits[0], true);
+                    searchList.forEach((video, index) => {
+                        process.stdout.write(`${video.id} ${index} ${video.title}\n`);
+                    })
+                }
+                else {
+                    process.stdout.write('unrecognized command.\n')
                 }
             }
-            // search
-            else if (matchCommand('search')(command)) {
-                searchList = await search_videos(page, splits);
-                searchList.forEach((video, index) => {
-                    process.stdout.write(`${video.id} ${index} ${video.title}\n`);
-                })
-            }
-            // live
-            else if (matchCommand('live')(command)) {
-                await open_live(page, splits[0]);
-            }
-            // help
-            else if (matchCommand('help')(command)) {
-                process.stdout.write('see https://github.com/xyqlx/bilibili-player\nplay [bvId] | search [keywords] | live [liveId] | most [uid] | new [uid] | help | quit\n');
-            }
-            // quit
-            else if (matchCommand('quit')(command)) {
-                process.stdout.write('quit...\n');
-                rl.close();
-                break;
-            }
-            // most
-            else if (matchCommand('most')(command)) {
-                searchList = await show_up_videos(page, splits[0], false);
-                searchList.forEach((video, index) => {
-                    process.stdout.write(`${video.id} ${index} ${video.title}\n`);
-                })
-                break;
-            }
-            // new
-            else if (matchCommand('new')(command)) {
-                searchList = await show_up_videos(page, splits[0], true);
-                searchList.forEach((video, index) => {
-                    process.stdout.write(`${video.id} ${index} ${video.title}\n`);
-                })
-            }
-            else {
-                process.stdout.write('unrecognized command.\n')
+            catch (err) {
+                // console.log(err);
+                process.stdout.write('\r从异常恢复\n');
             }
         }
     }
