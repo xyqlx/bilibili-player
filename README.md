@@ -8,13 +8,13 @@
 
 ### 搜索
 
-![search](images/search.png)
+![search](images/search-v2.png)
 
 搜不到的时候会报错
 
 ### 播放
 
-![play](images/play.png)
+![play](images/play-v2.png)
 
 ## 命令模式
 
