@@ -16,8 +16,8 @@ export function extract_time(text: string): number {
 };
 /**
  * 按关键词搜索视频
- * @param {playwright.Page} page playwright页面
- * @param {string[]} keywords 搜索关键词
+ * @param page playwright页面
+ * @param keywords 搜索关键词
  */
 export async function search_videos(page: Page, keywords: string[]): Promise<{ id: string, title: string }[]> { // TODO 返回值完全可以写成视频的信息
     await page.goto(`https://search.bilibili.com/all?keyword=${keywords.join('%20')
@@ -40,8 +40,8 @@ export async function search_videos(page: Page, keywords: string[]): Promise<{ i
 };
 /**
  * 进入直播间
- * @param {playwright.Page} page playwright页面
- * @param {string} liveId 直播间id
+ * @param page playwright页面
+ * @param liveId 直播间id
  */
 export async function open_live(page: Page, liveId: string): Promise<void> {
     // 这个页面好奇怪，总是加载不出来
