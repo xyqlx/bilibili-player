@@ -1,4 +1,4 @@
-import playwright = require('playwright');
+import { Page } from 'playwright';
 /**
  * 解析视频时长为秒数
  * @param {string} text 需要解析的时间，例如3:06
@@ -19,7 +19,7 @@ export function extract_time(text: string) {
  * @param {playwright.Page} page playwright页面
  * @param {string[]} keywords 搜索关键词
  */
-export async function search_videos(page: playwright.Page, keywords: string[]) { // TODO 返回值完全可以写成视频的信息
+export async function search_videos(page: Page, keywords: string[]) { // TODO 返回值完全可以写成视频的信息
     await page.goto(`https://search.bilibili.com/all?keyword=${keywords.join('%20')
         }`);
     await page.waitForSelector('.video-item > a', { timeout: 10000 });
@@ -43,7 +43,7 @@ export async function search_videos(page: playwright.Page, keywords: string[]) {
  * @param {playwright.Page} page playwright页面
  * @param {string} liveId 直播间id
  */
-export async function open_live(page: playwright.Page, liveId: string) {
+export async function open_live(page: Page, liveId: string) {
     // 这个页面好奇怪，总是加载不出来
     // 甚至在页面上用querySelector都搜索不出来，太神必了
     // iframe的话……不会用
@@ -110,7 +110,7 @@ export async function open_live(page: playwright.Page, liveId: string) {
  * 播放视频
  * @param {playwright.Page} page playwright页面
  * @param {string[]} videoList 视频Id列表
- */export async function play_videos(page: playwright.Page, videoList: string[]): Promise<void> {
+ */export async function play_videos(page: Page, videoList: string[]): Promise<void> {
     for await (const videoId of videoList) { // 这里应该监听事件/request/文字变化更稳一些可惜xyq不知道怎么做
         await page.goto(`https://www.bilibili.com/video/${videoId}`);
         const title = (await page.title()).replace(/\s*_哔哩哔哩_bilibili/, '');
@@ -186,7 +186,14 @@ export async function open_live(page: playwright.Page, liveId: string) {
         }
     }
 };
-export async function show_up_videos(page: playwright.Page, upId: string, latest: boolean): Promise<{ id: string, title: string }[]> {
+/**
+ * 获得UP空间的视频列表
+ * @param page playwright.Page对象
+ * @param upId up的UID号
+ * @param latest 是否选择最近/热门视频
+ * @returns 视频的id和标题列表
+ */
+export async function show_up_videos(page: Page, upId: string, latest: boolean): Promise<{ id: string, title: string }[]> {
     await page.goto(`https://space.bilibili.com/${upId}/video`);
     if (latest) {
         const collections = await page.$$('.cube-list > li > a.title');

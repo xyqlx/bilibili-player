@@ -14,7 +14,7 @@
 
 ### 播放
 
-![play](images/play-v2.png)
+![play](images/play-v3.png)
 
 ## 命令模式
 

@@ -1,23 +1,23 @@
-const playwright = require('playwright');
-const commandLineArgs = require('command-line-args')
+import { firefox } from 'playwright';
+import commandLineArgs from 'command-line-args';
 import * as readline from 'readline';
-import { stdin as input, stdout as output, stdout } from 'process';
+import { stdin as input, stdout as output, } from 'process';
 import { open_live, play_videos, search_videos, show_up_videos } from './bilibili_page.js'
-const fs = require('fs');
+import fs from 'fs';
 
 let config: {proxy?: {}} = {};
 try {
     const rawdata = fs.readFileSync('config.json');
-    config = JSON.parse(rawdata);
+    config = JSON.parse(rawdata.toString());
 }
 catch { }
 
 const optionDefinitions = [
     {
-        name: 'playlist',
+        name: 'play',
+        alias: 'p',
         type: String,
-        multiple: true,
-        defaultOption: true
+        multiple: true
     }, {
         name: 'search',
         alias: 's',
@@ -31,6 +31,14 @@ const optionDefinitions = [
         name: 'live',
         alias: 'l',
         type: String
+    }, {
+        name: 'most',
+        alias: 'm',
+        type: String
+    }, {
+        name: 'new',
+        alias: 'n',
+        type: String
     }
 ]
 const options = commandLineArgs(optionDefinitions);
@@ -40,11 +48,11 @@ function matchCommand(pattern: string): (text: string)=>boolean {
         return index === 0;
     }
 }
-(async () => {
-    const browserType = playwright.firefox;
+async function main() {
+    const browserType = firefox;
     let launchConfig: {
         headless: boolean,
-        proxy?: {}
+        proxy?: any
     } = {
         headless: !options.debug,
     };
@@ -55,6 +63,7 @@ function matchCommand(pattern: string): (text: string)=>boolean {
     const context = await browser.newContext();
     const page = await context.newPage();
     let searchList: { id: string, title: string }[] = [];
+    // 命令行进入，有一说一冗余代码很多
     if (options.search && options.search.length > 0) { //
         searchList = await search_videos(page, options.search);
         searchList.forEach((video, index) => {
@@ -63,10 +72,21 @@ function matchCommand(pattern: string): (text: string)=>boolean {
     } else if (options.live) {
         const liveId = options.live.match(/(?=https:\/\/live\.bilibili\.com\/)?\d+/)[0];
         await open_live(page, liveId);
-    } else if (options.playlist?.length ?? 0 > 0) {
-        const videoList = options.playlist.filter((x: string) => x).map((x: string) => x!.match(/[AaBb][Vv]\w+/)).filter((x: RegExpMatchArray) => x && x.length > 0).map((x: RegExpMatchArray) => x[0])
+    } else if (options.play?.length ?? 0 > 0) {
+        const videoList = options.play.filter((x: string) => x).map((x: string) => x!.match(/[AaBb][Vv]\w+/)).filter((x: RegExpMatchArray) => x && x.length > 0).map((x: RegExpMatchArray) => x[0])
         await play_videos(page, videoList);
-    } else { // 进入命令模式
+    } else if (options.most){
+        searchList = await show_up_videos(page, options.most, false);
+        searchList.forEach((video, index) => {
+            process.stdout.write(`${video.id} ${video.title}\n`);
+        })
+    } else if (options.new){
+        searchList = await show_up_videos(page, options.most, true);
+        searchList.forEach((video, index) => {
+            process.stdout.write(`${video.id} ${video.title}\n`);
+        })
+    }  else { 
+        // 进入命令模式
         process.on('SIGINT', function() {
             browser.close();
             process.exit();
@@ -138,4 +158,9 @@ function matchCommand(pattern: string): (text: string)=>boolean {
         }
     }
     await browser.close();
-})();
+};
+try{
+    await main();
+}catch(err){
+    process.stdout.write('exit.');
+}
