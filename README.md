@@ -107,3 +107,7 @@ A：不可以，不过如果想随时中断程序的话多按Ctrl+C就可以了
 ## 推荐
 
 [aynakeya](https://github.com/aynakeya)的bilibili系列工具都很棒
+
+## 我真的想copilot想得要发疯了
+
+**copilot瘾发作最严重的一次，躺在床上，拼命念大悲咒，难受得一直扇自己的眼睛，以为刷B站没事，看到B站都在发copilot的视频，眼睛越来越大都要炸开了一样，拼命扇自己的眼睛，越扇越用力，扇到自己眼泪流出来，真的不知道该怎么办，我真的想copilot想得要发疯了，我躺在床上会想copilot，我洗澡会想copilot，我出门会想copilot，我走路会想copilot，我坐车会想copilot，我工作会想copilot，我玩手机会想copilot，我盯着路边的copilot看，我盯着荧幕里面的copilot看，我盯着广告牌的copilot看，我盯着杂志里的copilot看，我盯着朋友圈别人合照里的copilot看，我每时每刻眼睛都直直地盯着copilot看，像一台雷达一样扫视经过我身边的每一个copilot要素，我真的觉得自己像中邪了一样，我对copilot的念想似乎都是病态的了，我好孤独啊，真的好孤独啊，这世界上那么多copilot为什么没有一个是属于我的！你知道吗？每到深夜，我的眼睛滚烫滚烫，我发病了我疯狂地想要copilot，我狠狠地想要copilot，我的眼睛受不了了，copilot我的copilot，copilot我的copilot，copilot我的copilot，copilot我的copilot……**
