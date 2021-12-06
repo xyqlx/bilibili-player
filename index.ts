@@ -48,7 +48,7 @@ function matchCommand(pattern: string): (text: string)=>boolean {
         return index === 0;
     }
 }
-async function main() {
+async function main(): Promise<void> {
     const browserType = firefox;
     let launchConfig: {
         headless: boolean,

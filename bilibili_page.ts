@@ -1,10 +1,10 @@
 import { Page } from 'playwright';
 /**
  * 解析视频时长为秒数
- * @param {string} text 需要解析的时间，例如3:06
+ * @param text 需要解析的时间，例如3:06
  * @returns 秒数
  */
-export function extract_time(text: string) {
+export function extract_time(text: string): number {
     const match = text.match(/((?<hour>\d+):)?(?<minute>\d+):(?<second>\d+)/);
     if (match) {
         const groups = match.groups;
@@ -19,7 +19,7 @@ export function extract_time(text: string) {
  * @param {playwright.Page} page playwright页面
  * @param {string[]} keywords 搜索关键词
  */
-export async function search_videos(page: Page, keywords: string[]) { // TODO 返回值完全可以写成视频的信息
+export async function search_videos(page: Page, keywords: string[]): Promise<{ id: string, title: string }[]> { // TODO 返回值完全可以写成视频的信息
     await page.goto(`https://search.bilibili.com/all?keyword=${keywords.join('%20')
         }`);
     await page.waitForSelector('.video-item > a', { timeout: 10000 });
@@ -43,7 +43,7 @@ export async function search_videos(page: Page, keywords: string[]) { // TODO �
  * @param {playwright.Page} page playwright页面
  * @param {string} liveId 直播间id
  */
-export async function open_live(page: Page, liveId: string) {
+export async function open_live(page: Page, liveId: string): Promise<void> {
     // 这个页面好奇怪，总是加载不出来
     // 甚至在页面上用querySelector都搜索不出来，太神必了
     // iframe的话……不会用
@@ -106,15 +106,17 @@ export async function open_live(page: Page, liveId: string) {
         }
 
     }
-};/**
+};
+/**
  * 播放视频
- * @param {playwright.Page} page playwright页面
- * @param {string[]} videoList 视频Id列表
- */export async function play_videos(page: Page, videoList: string[]): Promise<void> {
+ * @param page playwright页面
+ * @param videoList 视频Id列表
+ */
+export async function play_videos(page: Page, videoList: string[]): Promise<void> {
     for await (const videoId of videoList) { // 这里应该监听事件/request/文字变化更稳一些可惜xyq不知道怎么做
         await page.goto(`https://www.bilibili.com/video/${videoId}`);
         const title = (await page.title()).replace(/\s*_哔哩哔哩_bilibili/, '');
-        if(title.match(/出错啦/)){
+        if (title.match(/出错啦/)) {
             process.stdout.write(`出错啦\n`);
             return;
         }
@@ -137,15 +139,15 @@ export async function open_live(page: Page, liveId: string) {
         let upNames = await Promise.all(upNameCollection.map(async x => await x.innerText()));
         let upinfo = upIds.map((v, i) => `${upNames[i]}(${v})`).join(', ');
         // 试着从元信息里找UP信息
-        if(upinfo === ''){
-            for(const meta of await page.$$('meta')){
+        if (upinfo === '') {
+            for (const meta of await page.$$('meta')) {
                 const metaName = await meta.getAttribute('name');
-                if(metaName === 'author'){
+                if (metaName === 'author') {
                     upNames = [await meta.getAttribute('content') ?? ''];
-                    for(const a of await page.$$('a')){
-                        if(upNames[0] === await a.innerText()){
+                    for (const a of await page.$$('a')) {
+                        if (upNames[0] === await a.innerText()) {
                             const match = (await a.getAttribute('href'))?.match(/\d+/);
-                            if(match){
+                            if (match) {
                                 upIds = [match[0]];
                                 break;
                             }
@@ -213,8 +215,8 @@ export async function show_up_videos(page: Page, upId: string, latest: boolean):
     } else {
         await page.click('ul.be-tab-inner>li:nth-child(2)>input');
         // await page.waitForSelector('ul.be-tab-inner>li:nth-child(2).is-active');
-        const response = await page.waitForResponse(p=>p.url().includes('search') && p.status() === 200);
+        const response = await page.waitForResponse(p => p.url().includes('search') && p.status() === 200);
         const videos = JSON.parse(await response.text())['data']['list']['vlist'];
-        return videos.map((x:any)=>({id: x['bvid'], title: x['title']}));
+        return videos.map((x: any) => ({ id: x['bvid'], title: x['title'] }));
     }
 }
