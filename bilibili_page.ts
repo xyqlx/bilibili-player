@@ -120,14 +120,21 @@ export async function play_videos(page: Page, videoList: string[]): Promise<void
             process.stdout.write(`出错啦\n`);
             return;
         }
-        process.stdout.write(`正在播放：${title}\n`);
+        process.stdout.write(`正在播放：${title} ${videoId}\n`);
         // 关闭可能的静音（很多时候都会失效）
         try {
             const volume = await page.innerText('div.bilibili-player-video-volume-num', { timeout: 5000 });
             console.log(`音量: ${volume}`);
             if (volume === '0') {
-                await page.click('button.bilibili-player-iconfont bilibili-player-iconfont-volume-min');
-                process.stdout.write('试图关闭静音\n');
+                const volumeButtons = await page.$$('button.bilibili-player-iconfont bilibili-player-iconfont-volume-min');
+                if(volumeButtons.length === 0) {
+                    process.stdout.write('未找到音量按钮，自动退出\n');
+                    continue;
+                }else{
+                    await volumeButtons[0].click();
+                    const newVolume = await page.innerText('div.bilibili-player-video-volume-num', { timeout: 5000 });
+                    console.log(`音量: ${newVolume}`);
+                }
             }
         }
         catch (err) { }
@@ -180,6 +187,7 @@ export async function play_videos(page: Page, videoList: string[]): Promise<void
             const currentTimeText = await page.innerText('span.bilibili-player-video-time-now');
             const currentTime = extract_time(currentTimeText);
             if (currentTime == fullTime) {
+                process.stdout.write(`当前part播放结束，将播放下一part或概率自动连播\r\n`);
                 break;
             }
             // console.log(`${currentTimeText}/${fullTimeText}`);
