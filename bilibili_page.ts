@@ -52,6 +52,8 @@ export async function open_live(page: Page, liveId: string): Promise<void> {
         waitUntil: 'load',
         timeout: 0
     });
+    // 打开直播间的时候有概率触发firefox的autoplay block导致静音
+    // 因为直播间没有M键切换静音功能，所以问题暂时无法解决
     process.stdout.write(`直播间加载中\n`);
     let title = '';
     let currentTime = 0;
@@ -126,18 +128,17 @@ export async function play_videos(page: Page, videoList: string[]): Promise<void
             const volume = await page.innerText('div.bilibili-player-video-volume-num', { timeout: 5000 });
             console.log(`音量: ${volume}`);
             if (volume === '0') {
-                const volumeButtons = await page.$$('button.bilibili-player-iconfont bilibili-player-iconfont-volume-min');
-                if(volumeButtons.length === 0) {
-                    process.stdout.write('未找到音量按钮，自动退出\n');
+                await page.keyboard.press('m');                
+                const newVolume = await page.innerText('div.bilibili-player-video-volume-num', { timeout: 5000 });
+                console.log(`试图调节音量: ${newVolume}`);
+                if(newVolume === '0') {
                     continue;
-                }else{
-                    await volumeButtons[0].click();
-                    const newVolume = await page.innerText('div.bilibili-player-video-volume-num', { timeout: 5000 });
-                    console.log(`音量: ${newVolume}`);
                 }
             }
         }
-        catch (err) { }
+        catch (err) {
+            console.log('获取音量失败');
+        }
         // 显示UP信息
         const upUrlCollection = await page.$$('.up-card>a');
         const upUrls = await Promise.all(upUrlCollection.map(async x => await x.getAttribute('href')));
