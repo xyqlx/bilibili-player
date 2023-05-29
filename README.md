@@ -1,5 +1,7 @@
 # bilibili-player
 
+⚠️当前此项目已不再维护，可以先看看[.NET版本](https://github.com/xyqlx/BilibiliJustListening)
+
 在命令行中打开bilibili视频黑听的工具
 
 缺点是比较慢（
